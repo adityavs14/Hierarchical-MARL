@@ -23,6 +23,10 @@ We use ``ray==2.10.0`` isntead of the latest version. Run the following to overr
 pip install ray==2.10.0
 ```
 
+## Directories
+We have 2 versions based on the number of subpolicies defined. `3policy` corresponds to the version with one master policy and 2 subpolicies, namely `Investigate` and `Recover`. `4policy` includes an additional subpolicy `Control Traffic`. 
+Both the settings are currently configured to work on the default settings provided by `CybORG`.
+
 ## Training subpolicies
 
 To train the subpolicies as defined in the paper run the following:
