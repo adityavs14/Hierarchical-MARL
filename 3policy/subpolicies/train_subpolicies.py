@@ -96,10 +96,10 @@ for i in range(NUM_AGENTS):
     OBSERVATION_SPACE[f"Agent{i}_master"] = gymnasium.spaces.Dict({'action_mask': gymnasium.spaces.multi_discrete.MultiDiscrete([2,2]),'observations':env.observation_space(f'blue_agent_{i}')['observations'], 'id':gymnasium.spaces.discrete.Discrete(1)})
     ACTION_SPACE[f"Agent{i}_master"] = gymnasium.spaces.discrete.Discrete(2)
 
-    OBSERVATION_SPACE[f"Agent{i}_investigate"] = gymnasium.spaces.Dict({'action_mask': env.observation_space(f"blue_agent_{i}")['action_mask'], 'observations':env.observation_space(f"blue_agent_{i}")['observations']})
+    OBSERVATION_SPACE[f"Agent{i}_investigate"] = gymnasium.spaces.Dict({'action_mask': env.observation_space(f"blue_agent_{i}")['action_mask'], 'observations':env.observation_space(f"blue_agent_{i}")['obs_investigate']})
     ACTION_SPACE[f"Agent{i}_investigate"] = env.action_space(f"blue_agent_{i}")
 
-    OBSERVATION_SPACE[f"Agent{i}_recover"] = gymnasium.spaces.Dict({'action_mask': env.observation_space(f"blue_agent_{i}")['action_mask'], 'observations':env.observation_space(f"blue_agent_{i}")['observations']})
+    OBSERVATION_SPACE[f"Agent{i}_recover"] = gymnasium.spaces.Dict({'action_mask': env.observation_space(f"blue_agent_{i}")['action_mask'], 'observations':env.observation_space(f"blue_agent_{i}")['obs_recover']})
     ACTION_SPACE[f"Agent{i}_recover"] = env.action_space(f"blue_agent_{i}")
 
 
@@ -138,7 +138,7 @@ algo_config = (
     )
 )
 
-model_dir = "models/train_subpolicies"
+model_dir = "saved_policies/sub"
 
 check_env(env)
 algo = algo_config.build()

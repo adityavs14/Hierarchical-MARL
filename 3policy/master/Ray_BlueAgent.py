@@ -26,10 +26,10 @@ class HMARLBlueAgent(BaseAgent):
         
         # each blue agent has its own policy
         if "master" in self.name:
-            pkl_cp_dir = os.path.join(os.path.dirname(__file__), "models/master_default/iter_49/policies/", self.name) # for evaluation
+            pkl_cp_dir = os.path.join("saved_policies/master/iter_49/policies/", self.name) # for evaluation
             # return # to train, just return
         else:
-            pkl_cp_dir = os.path.join(os.path.dirname(__file__), "models/subpolicies_default/iter_49/policies/", self.name)
+            pkl_cp_dir = os.path.join("saved_policies/sub/iter_49/policies/", self.name)
     
         print("\nLoading Serializable blue agent model from ", pkl_cp_dir)
         self.policy = SerializablePolicy.from_checkpoint(pkl_cp_dir)

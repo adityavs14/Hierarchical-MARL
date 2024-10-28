@@ -7,12 +7,15 @@ from CybORG.Agents import SleepAgent, EnterpriseGreenAgent, FiniteStateRedAgent
 from CybORG.Simulator.Scenarios import EnterpriseScenarioGenerator
 
 from datetime import datetime
+from pprint import pprint
 
 import json
 
 import sys
 import os
-import itertools
+
+from metrics import Metrics
+
 
 def rmkdir(path: str):
     """Recursive mkdir"""
@@ -69,7 +72,6 @@ def run_evaluation(submission, log_path, max_eps=100, write_to_file=True, seed=N
     )
     cyborg = CybORG(sg, "sim", seed=seed)
     wrapped_cyborg = submission.wrap(cyborg)
-    red_agents = [red_agent for red_agent in cyborg.agents if 'red' in red_agent]
 
     print(version_header)
     print(author_header)
@@ -88,88 +90,39 @@ def run_evaluation(submission, log_path, max_eps=100, write_to_file=True, seed=N
     actions_log = []
     obs_log = []
 
-    infection_metric = {}
-    noninfection_frac = {}
-    noninfection_frac_crt_mean = {}
-    nonprivileged_frac = {}
-    nonprivileged_frac_crt_mean = {}
-    red_actions = {}
-    red_actions_crt_mean = {}
-
-    true_false_pos = {}
-    infection_stride = {}
-    privileged_stride = {}
+    # interpretable metrics
+    i_metrics = Metrics(cyborg)
 
     for i in range(max_eps):
         observations, _ = wrapped_cyborg.reset()
+
+        # reset metrics
+        i_metrics.reset_metrics(cyborg)
+
         r = []
         a = []
         o = []
-        count = 0
-       
-        infection_metric[i] = {}
-        noninfection_frac[i] = {}
-        nonprivileged_frac[i] = {}
-        red_actions[i] = {}
-
+        
         for j in range(EPISODE_LENGTH):
             actions = {
-                agent_name: submission.AGENTS[agent_name].get_action(
-                    observations[agent_name], wrapped_cyborg.action_space(agent_name[:12])
+                agent_name: agent.get_action(
+                    observations[agent_name], wrapped_cyborg.action_space(agent_name)
                 )
-                for agent_name in observations
+                for agent_name, agent in submission.AGENTS.items()
+                if agent_name in wrapped_cyborg.agents
             }
+
+            # need compromise status before step to check for true/false positives on restores and compute time to recover
+            compromised_status_before_step = i_metrics.get_compromised_status_per_host()
+
             observations, rew, term, trunc, info = wrapped_cyborg.step(actions)
-            print(rew)
-
-            r.append(mean(rew.values()))
-             
-            #if j == EPISODE_LENGTH - 2:
-            #stride = wrapped_cyborg.infection_stride_lengths
-            #print(j, stride)
-
-            # compromise metric
-            imetric, nonimetric, privileged, nonprivileged = wrapped_cyborg.infection_metric()
-            for subnet in imetric:
-                if  subnet not in infection_metric[i]:
-                    infection_metric[i][subnet] = []
-                    noninfection_frac[i][subnet] = []
-                    nonprivileged_frac[i][subnet] = []
-
-                infection_metric[i][subnet].append(imetric[subnet])
-
-                frac = nonimetric[subnet] / (nonimetric[subnet] + imetric[subnet])
-                noninfection_frac[i][subnet].append(frac)
-                
-                pfrac = nonprivileged[subnet] / (nonprivileged[subnet] + privileged[subnet])
-                nonprivileged_frac[i][subnet].append(pfrac)
-                
-            #  operations metric
-            # Store actions for red agents
-            for agent_name in red_agents:
-                acti = cyborg.get_last_action(agent_name)
-                act = acti[0].name
-                if act != "Impact": continue
-                if act == "Impact":
-                    if "operational" not in acti[0].hostname: continue
-                    #print(acti[0].hostname)
-                    
-                if agent_name not in red_actions[i]:
-                    red_actions[i][agent_name] = {}
-
-                if act not in red_actions[i][agent_name]:
-                    red_actions[i][agent_name][act] = 0
-
-                red_actions[i][agent_name][act] +=  1
-
             done = {
-                agent_name: term.get(agent_name, False) or trunc.get(agent_name, False)
-                for agent_name in observations
+                agent: term.get(agent, False) or trunc.get(agent, False)
+                for agent in wrapped_cyborg.agents
             }
             if all(done.values()):
-
                 break
-
+            r.append(mean(rew.values()))
             if write_to_file:
                 a.append(actions)
                 o.append(
@@ -178,106 +131,21 @@ def run_evaluation(submission, log_path, max_eps=100, write_to_file=True, seed=N
                         for agent_name in observations.keys()
                     }
                 )
-                
+    
+            # collect metrics for this time step
+            i_metrics.collect_stats_timestep(cyborg, wrapped_cyborg, actions, compromised_status_before_step)
 
         total_reward.append(sum(r))
-        print("\nEpisode:", i, mean(total_reward))
 
-        print("Infection:")
-        #for subnet in infection_metric[i]:
-        #    print(subnet, "noninfection:", mean(noninfection_frac[i][subnet]), "nonprivileged:", mean(nonprivileged_frac[i][subnet]), mean(infection_metric[i][subnet]), stdev(infection_metric[i][subnet]))
-       
-        noninfection_frac_all = []
-        nonprivileged_frac_all = []
+        # collect metrics for this episode
+        i_metrics.collect_stats_episode()
 
-        for subnet in noninfection_frac[i]:
-            if subnet not in noninfection_frac_crt_mean:
-                noninfection_frac_crt_mean[subnet] = []
-                nonprivileged_frac_crt_mean[subnet] = []
-                
-            noninfection_frac_crt_mean[subnet].append(mean(noninfection_frac[i][subnet]))
-            nonprivileged_frac_crt_mean[subnet].append(mean(nonprivileged_frac[i][subnet]))
-            print("running avg", subnet, "noninfection:", round(mean(noninfection_frac_crt_mean[subnet]), 2), "nonprivileged:", round(mean(nonprivileged_frac_crt_mean[subnet]), 2))
-       
-            if "contractor" not in subnet:
-                noninfection_frac_all.extend(noninfection_frac_crt_mean[subnet])
-                nonprivileged_frac_all.extend(nonprivileged_frac_crt_mean[subnet])
+        print("Episode:", i, mean(total_reward))
 
-        #noninfection_frac_all = list(itertools.chain.from_iterable(noninfection_frac_crt_mean.values()))
-        print("Noninfection frac across subnets:", round(mean(noninfection_frac_all), 2))
-        #nonprivileged_frac_all = list(itertools.chain.from_iterable(nonprivileged_frac_crt_mean.values()))
-        print("Nonprivileged frac across subnets:", round(mean(nonprivileged_frac_all), 2))
+        # print current running averages
+        stats_crt = i_metrics.stats_game()
+        pprint(stats_crt)
 
-        print("\nTrue False pos:")
-        tp_fp = wrapped_cyborg.true_false_pos
-        for subnet in tp_fp:
-            if subnet not in true_false_pos:
-                true_false_pos[subnet] = {}
-                true_false_pos[subnet]["tp"] = []
-                true_false_pos[subnet]["fp"] = []
-
-            true_false_pos[subnet]["tp"].append(tp_fp[subnet]["tp"])
-            true_false_pos[subnet]["fp"].append(tp_fp[subnet]["fp"])
-
-        true_pos_all = []
-        false_pos_all = []
-        for subnet in true_false_pos:  # the running average
-            print(subnet, "tp", round(mean(true_false_pos[subnet]["tp"]), 2), "fp", round(mean(true_false_pos[subnet]["fp"]), 2))
-            true_pos_all.append(round(mean(true_false_pos[subnet]["tp"]), 2))
-            false_pos_all.append(round(mean(true_false_pos[subnet]["fp"]), 2))
-        print("True pos across subnets:", round(mean(true_pos_all), 2))
-        print("False pos across subnets:", round(mean(false_pos_all), 2))
-
-        print("\nInfection stride length:")
-        stride_crt = wrapped_cyborg.infection_stride_lengths
-        for subnet in stride_crt:
-            if len(stride_crt[subnet]) == 0: continue
-            if subnet not in infection_stride:
-                infection_stride[subnet] = []
-            infection_stride[subnet].append(mean(stride_crt[subnet])) # add the average stride for this episode
-
-        for subnet in infection_stride:
-            print(subnet, "stride", round(mean(infection_stride[subnet]), 2)) # the running average up to the current episode
-        
-        infection_stride_all = list(itertools.chain.from_iterable(infection_stride.values()))
-        print("Mean stride across subnets:", round(mean(infection_stride_all), 2))
-
-        print("\nPrivileged stride length:")
-        priv_stride_crt = wrapped_cyborg.privileged_stride_lengths
-        for subnet in priv_stride_crt:
-            if len(priv_stride_crt[subnet]) == 0: continue 
-            if subnet not in privileged_stride:
-                privileged_stride[subnet] = []
-            privileged_stride[subnet].append(mean(priv_stride_crt[subnet])) # add the average stride for this episode
-
-        for subnet in privileged_stride:
-            print(subnet, "stride", round(mean(privileged_stride[subnet]),2)) # the running average up to the current episode
-        
-        privileged_stride_all = list(itertools.chain.from_iterable(privileged_stride.values()))
-        print("Mean stride  across subnets:", round(mean(privileged_stride_all), 2))
-
-        print("\nActions:")
-        for agent_name in red_agents:
-            #print("\n", agent_name, wrapped_cyborg.subnet_assignment(agent_name))
-            if agent_name not in red_actions_crt_mean:
-                red_actions_crt_mean[agent_name] = {}
-            if agent_name not in red_actions[i]: 
-                act = "Impact"
-                if act  not in red_actions_crt_mean[agent_name]:
-                    red_actions_crt_mean[agent_name][act] = []
-                red_actions_crt_mean[agent_name][act].append(0)
-                #print(agent_name, wrapped_cyborg.subnet_assignment(agent_name), act, mean(red_actions_crt_mean[agent_name][act]))
-                print(agent_name, wrapped_cyborg.subnet_assignment(agent_name), act, red_actions_crt_mean[agent_name][act], "mean", round(mean(red_actions_crt_mean[agent_name][act]), 2))
-                continue
-
-            for act in red_actions[i][agent_name]:
-                if act not in red_actions_crt_mean[agent_name]:
-                    red_actions_crt_mean[agent_name][act] = []
-                red_actions_crt_mean[agent_name][act].append(red_actions[i][agent_name][act])
-            for act in red_actions_crt_mean[agent_name]:
-                if act == 'Sleep': continue
-                print(agent_name, wrapped_cyborg.subnet_assignment(agent_name), act, red_actions_crt_mean[agent_name][act], "mean", round(mean(red_actions_crt_mean[agent_name][act]), 2))
-            
         if write_to_file:
             actions_log.append(a)
             obs_log.append(o)
@@ -291,6 +159,7 @@ def run_evaluation(submission, log_path, max_eps=100, write_to_file=True, seed=N
         f"Average reward is: {reward_mean} with a standard deviation of {reward_stdev}"
     )
     print(reward_string)
+    
 
     print(f"File took {difference} amount of time to finish evaluation")
     if write_to_file:
@@ -349,6 +218,9 @@ def run_evaluation(submission, log_path, max_eps=100, write_to_file=True, seed=N
         with open(log_path + "scores.txt", "w") as scores:
             scores.write(f"reward_mean: {reward_mean}\n")
             scores.write(f"reward_stdev: {reward_stdev}\n")
+        with open(log_path + "metrics.json", "w") as output:
+            final_stats = i_metrics.stats_game()
+            json.dump(final_stats, output)
 
 
 if __name__ == "__main__":

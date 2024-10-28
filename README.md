@@ -5,10 +5,8 @@ This repository contains implementations for Hierarchical Multi-agent Reinforcem
 
 
 ## Requirements
-Install the 'CybORG' environment provided in [this repository](https://github.com/cage-challenge/cage-challenge-4). This can be done by cloning the repository and then running the following
+Install the 'CybORG' environment provided in [this repository](https://github.com/cage-challenge/cage-challenge-4). Create a virtual environment using `venv` or `conda`. Once the repository is cloned run the following:
 ```
-conda create -n cyborg python=3.9
-conda activate cyborg
 pip install -r Requirements.txt
 pip install -e .
 ```
@@ -18,7 +16,7 @@ The environment installation can be tested by running the test provided in the r
 pytest ./CybORG/Tests/test_cc4
 ```
 
-We use ``ray==2.10.0`` isntead of the latest version. Run the following to override the installation provided by `CybORG` instead
+Install Ray 2.10:
 ```
 pip install ray==2.10.0
 ```
@@ -29,26 +27,24 @@ Both the settings are currently configured to work on the default settings provi
 
 ## Training subpolicies
 
-To train the subpolicies as defined in the paper run the following:
+Navigate to the directory of either `3policy` or `4policy`, depending on which version of the experiment you want to run. To train the subpolicies as defined in the paper run the following:
 ```
-cd ./3policy/subpolicies
-python3 -u train_subpolicies.py
+cd 3policy
+python3 -u subpolicies/train_subpolicies.py
 ```
 
-The models will be saved at `models/train_subpolicies`. Copy this and paste it in `3policy/master` and rename the folder `train_subpolicies` to `subpolicies_default`.
+The models will be saved at `saved_subpolicies/sub`.
 
 ## Training master policy
-Once the subpolicies have been trained and moved to the `master` directory, we can train the master policy. Run the following:
+Once the subpolicies have been trained, we can train the master policy. Run the following:
 ```
-cd ./3policy/master
-python3 -u train_master.py
+python3 -u master/train_master.py
 ```
 ## Evaluation and metrics
 To see the final score and the metrics defined run the following:
 ```
-cd ./3policy/master
-python3 -u evaluation_metrics.py submission.py output
+python3 -u master/evaluation_metrics.py master/submission.py output
 ```
-This will use the `submission.py` already defined and save the results to a directory `output`
+This will use the `submission.py` already defined in the `master` directory and save the results to a directory `output`.
 
 ### Above defined steps are similar for `4policy` version as well and can be run by just replacing `3policy` with `4policy`

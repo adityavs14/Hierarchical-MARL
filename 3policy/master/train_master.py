@@ -113,7 +113,7 @@ algo_config = (
 )
 
 
-model_dir = "models/train_master"
+model_dir = "saved_policies/master"
 
 check_env(env)
 algo = algo_config.build()
