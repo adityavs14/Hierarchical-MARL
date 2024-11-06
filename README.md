@@ -25,6 +25,42 @@ pip install ray==2.10.0
 We have 2 versions based on the number of subpolicies defined. `3policy` corresponds to the version with one master policy and 2 subpolicies, namely `Investigate` and `Recover`. `4policy` includes an additional subpolicy `Control Traffic`. 
 Both the settings are currently configured to work on the default settings provided by `CybORG`.
 
+## H-MARL Expert
+
+This corresponds to a master policy guided by expert domain knowledge. For training this version we will only need the `subpolicies` folder. 
+
+### Training
+
+Navigate to the directory of either `3policy` or `4policy` depending on the number of subpolicies and run the following.
+```
+cd 3policy
+python3 -u subpolicies/train_subpolicies.py
+```
+The models will be saved at `saved_subpolicies/sub`.
+
+### Evaluation and Metrics
+To evaluate H-MARL Expert, run the following while being in the same directory as the training.
+
+```
+python3 -u subpolicies/evaluation_metrics.py subpolicies/submission.py hmarl_expert_output
+```
+This will use the `submission.py` already defined in the `subpolicies` directory and save the results to a directory `3policy/hmarl_expert_output`.
+
+## H-MARL Meta
+This corresponds to the 2 step training of subpolicies and master policy. To train this version we reuse the subpolicies trained by `H-MARL Expert` to train the master policies. 
+### Training
+Ensure that the subpolicies have been trained using the `H-MARL Expert` method defined [here](#h-marl-expert). After that, run the following
+```
+python3 -u master/train_master.py
+```
+### Evaluation and Metrics
+To evaluate `H-MARL Meta`, run the following
+```
+python3 -u master/evaluation_metrics.py master/submission.py hmarl_meta_output
+```
+This will use the `submission.py` already defined in the `master` directory and save the results to a directory `3policy/hmarl_meta_output`.
+
+<!-- 
 ## Training subpolicies
 
 Navigate to the directory of either `3policy` or `4policy`, depending on which version of the experiment you want to run. To train the subpolicies as defined in the paper run the following:
@@ -45,6 +81,6 @@ To see the final score and the metrics defined run the following:
 ```
 python3 -u master/evaluation_metrics.py master/submission.py output
 ```
-This will use the `submission.py` already defined in the `master` directory and save the results to a directory `output`.
+This will use the `submission.py` already defined in the `master` directory and save the results to a directory `output`. -->
 
 ### Above defined steps are similar for `4policy` version as well and can be run by just replacing `3policy` with `4policy`
