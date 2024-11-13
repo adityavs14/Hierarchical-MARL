@@ -81,7 +81,7 @@ for i in range(NUM_AGENTS):
 algo_config = (
     PPOConfig()
     .framework("torch")
-    .debugging(logger_config={"logdir":"logs/train_master_4policy_default", "type":"ray.tune.logger.TBXLogger"})
+    .debugging(logger_config={"logdir":"logs/train_master", "type":"ray.tune.logger.TBXLogger"})
     .environment(env="CC4")
     # Use GPUs iff `RLLIB_NUM_GPUS` env var set to > 0.
     #.resources(num_gpus=1)  # export CUDA_VISIBLE_DEVICES=0,1
@@ -111,7 +111,7 @@ algo_config = (
     )
 )
 
-model_dir = "models/train_master_4policy_default"
+model_dir = "saved_models/master"
 
 check_env(env)
 algo = algo_config.build()
