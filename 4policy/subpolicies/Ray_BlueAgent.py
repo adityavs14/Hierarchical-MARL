@@ -25,9 +25,9 @@ class HMARLBlueAgent(BaseAgent):
         
         # each blue agent has its own policy
         if "investigate" in self.name or "recover" in self.name:
-            pkl_cp_dir = os.path.join(os.path.dirname(__file__), "../3policy/models/train_subpolicies/iter_49/policies/", self.name)
-        else:
-            pkl_cp_dir = os.path.join(os.path.dirname(__file__), "models/train_trafficControl_expert/iter_30/policies/", self.name)
+            pkl_cp_dir = os.path.join(os.path.dirname(__file__), "../../3policy/saved_policies/sub/iter_49/policies/", self.name)
+        else: # traffic control
+            pkl_cp_dir = os.path.join(os.path.dirname(__file__), "../saved_policies/sub/iter_30/policies/", self.name)
 
         print("\nLoading Serializable blue agent model from ", pkl_cp_dir)
         self.policy = SerializablePolicy.from_checkpoint(pkl_cp_dir)
