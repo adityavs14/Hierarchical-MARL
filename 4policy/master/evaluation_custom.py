@@ -162,6 +162,7 @@ def run_evaluation(submission, log_path, max_eps=100, write_to_file=True, seed=N
                 total_blue_action_counts[act] = []
             total_blue_action_counts[act].append(blue_action_counts[act])
 
+        print("\nStatistics for Blue Team:")
         for act in total_blue_action_counts:
             if len(total_blue_action_counts[act]) < 2:
                 print("Episode:", i, act, "mean count:", mean(total_blue_action_counts[act]))
@@ -173,6 +174,7 @@ def run_evaluation(submission, log_path, max_eps=100, write_to_file=True, seed=N
                 total_red_action_counts[act] = []
             total_red_action_counts[act].append(red_action_counts[act])
 
+        print("\nStatistics for Red Team:")
         for act in total_red_action_counts:
             if len(total_red_action_counts[act]) < 2:
                 print("Episode:", i, act, "mean count:", mean(total_red_action_counts[act]))
@@ -183,7 +185,7 @@ def run_evaluation(submission, log_path, max_eps=100, write_to_file=True, seed=N
         total_branch_counts["recover"].append(branch_counts["1"])
         total_branch_counts["trafficControl"].append(branch_counts["2"])
 
-        print("\n")
+        print("\nStatistics per branch (subpolicy):")
         for branch in total_branch_counts:
             if len(total_branch_counts[branch]) < 2:
                 print("Episode:", i,  branch, "mean count", mean(total_branch_counts[branch]))

@@ -182,12 +182,12 @@ def run_evaluation(submission, log_path, max_eps=100, write_to_file=True, seed=N
             else:
                 print("Episode:", i, act, "mean count:", mean(total_blue_action_counts[act]), "std count:", stdev(total_blue_action_counts[act]))
 
-        print("\nStatistics for Red Team:")
         for act in red_action_counts:
             if act not in total_red_action_counts:
                 total_red_action_counts[act] = []
             total_red_action_counts[act].append(red_action_counts[act])
 
+        print("\nStatistics for Red Team:")
         for act in total_red_action_counts:
             if len(total_red_action_counts[act]) < 2:
                 print("Episode:", i, act, "mean count:", mean(total_red_action_counts[act]))
