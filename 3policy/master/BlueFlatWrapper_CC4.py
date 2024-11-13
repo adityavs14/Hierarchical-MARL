@@ -52,7 +52,7 @@ USE_MESSAGES = True
 HITL = False # enable for Expert
 FULL_MASK = True
 
-COMPUTE_METRICS = False # takes time, do just in evaluation
+COMPUTE_METRICS = False # for evaluation only, not during training
 
 
 class BlueFlatWrapper(BlueFixedActionWrapper):

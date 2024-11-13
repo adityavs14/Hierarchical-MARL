@@ -39,12 +39,18 @@ python3 -u subpolicies/train_subpolicies.py
 The models will be saved at `saved_subpolicies/sub`.
 
 ### Evaluation and Metrics
-To evaluate H-MARL Expert, run the following while being in the same directory as the training.
+To evaluate H-MARL Expert, run the following command while being in the same directory as the training.
+
+```
+python3 -u subpolicies/evaluation.py subpolicies/submission.py hmarl_expert_output
+```
+This command will use the `submission.py` already defined in the `subpolicies` directory and save the results to a directory `3policy/hmarl_expert_output`.
+
+To collect additional metrics related to network security posture, precision and error of recovers, and operational impact, enable the COMPUTE_METRICS flag from the subpolicies/BlueFlatWrapper_CC4.py script, and run the following command:
 
 ```
 python3 -u subpolicies/evaluation_metrics.py subpolicies/submission.py hmarl_expert_output
 ```
-This will use the `submission.py` already defined in the `subpolicies` directory and save the results to a directory `3policy/hmarl_expert_output`.
 
 ## H-MARL Meta
 This corresponds to the 2 step training of subpolicies and master policy. To train this version we reuse the subpolicies trained by `H-MARL Expert` to train the master policies. 
@@ -58,7 +64,13 @@ To evaluate `H-MARL Meta`, run the following
 ```
 python3 -u master/evaluation_metrics.py master/submission.py hmarl_meta_output
 ```
-This will use the `submission.py` already defined in the `master` directory and save the results to a directory `3policy/hmarl_meta_output`.
+This command will use the `submission.py` already defined in the `master` directory and save the results to a directory `3policy/hmarl_meta_output`.
+
+To collect additional metrics related to network security posture, precision and error of recovers, and operational impact, enable the COMPUTE_METRICS flag from the master/BlueFlatWrapper_CC4.py script, and run the following command:
+
+```
+python3 -u master/evaluation_metrics.py master/submission.py hmarl_meta_output
+```
 
 <!-- 
 ## Training subpolicies
@@ -83,4 +95,4 @@ python3 -u master/evaluation_metrics.py master/submission.py output
 ```
 This will use the `submission.py` already defined in the `master` directory and save the results to a directory `output`. -->
 
-### Above defined steps are similar for `4policy` version as well and can be run by just replacing `3policy` with `4policy`
+### The steps described above are similar for the `4policy` version as well.
