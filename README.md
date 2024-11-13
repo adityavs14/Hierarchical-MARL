@@ -27,7 +27,7 @@ Both the settings are currently configured to work on the default settings provi
 
 ## H-MARL Expert
 
-This corresponds to a master policy guided by expert domain knowledge. For training this version we will only need the `subpolicies` folder. 
+This defense strategy corresponds to a master policy guided by expert domain knowledge. For training this version we will only need the `subpolicies` folder. 
 
 ### Training
 
@@ -39,7 +39,7 @@ python3 -u subpolicies/train_subpolicies.py
 The models will be saved at `saved_subpolicies/sub`.
 
 ### Evaluation and Metrics
-To evaluate H-MARL Expert, run the following command while being in the same directory as the training.
+To evaluate H-MARL Expert, run the following command from the 3policy (or 4policy) directory.
 
 ```
 python3 -u subpolicies/evaluation.py subpolicies/submission.py hmarl_expert_output
@@ -93,6 +93,8 @@ To see the final score and the metrics defined run the following:
 ```
 python3 -u master/evaluation_metrics.py master/submission.py output
 ```
+
 This will use the `submission.py` already defined in the `master` directory and save the results to a directory `output`. -->
 
-### The steps described above are similar for the `4policy` version as well.
+<!-- ### The same steps described above for `3policy` are used to train and evaluate the `4policy` version as well.-->
+
