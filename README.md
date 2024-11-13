@@ -23,7 +23,7 @@ pip install ray==2.10.0
 
 ## Directories
 We have 2 versions based on the number of subpolicies defined. `3policy` corresponds to the version with one master policy and 2 subpolicies, namely `Investigate` and `Recover`. `4policy` includes an additional subpolicy `Control Traffic`. 
-Both versions are currently configured to work on the default settings provided by `CybORG`.
+Both versions are currently configured to work on the default settings provided by `CybORG`. The models trained and evaluated in the paper are provided in the `saved_policies` directory.
 
 ## H-MARL Expert
 
@@ -62,7 +62,7 @@ python3 -u master/train_master.py
 ### Evaluation and Metrics
 To evaluate `H-MARL Meta`, run the following command:
 ```
-python3 -u master/evaluation_metrics.py master/submission.py hmarl_meta_output
+python3 -u master/evaluation.py master/submission.py hmarl_meta_output
 ```
 This command will use the `submission.py` already defined in the `master` directory and save the results to a directory `3policy/hmarl_meta_output`.
 
