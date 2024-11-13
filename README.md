@@ -1,11 +1,11 @@
 # AAMAS-HMARL-submission
 
 
-This repository contains the source code and models for the Hierarchical Multi-agent Reinforcement Learning for Cyber Network Defense paper submitted to AAMAS 2025.
+This repository contains the source code and models for the paper "Hierarchical Multi-agent Reinforcement Learning for Cyber Network Defense" submitted to AAMAS 2025.
 
 
 ## Requirements
-Install the 'CybORG' environment provided in [this repository](https://github.com/cage-challenge/cage-challenge-4). Create a virtual environment using `venv` or `conda`. Once the repository is cloned run the following command:
+Install the `CybORG` environment provided in [this repository](https://github.com/cage-challenge/cage-challenge-4). Create a virtual environment using `venv` or `conda`. Once the repository is cloned run the following command:
 ```
 pip install -r Requirements.txt
 pip install -e .
