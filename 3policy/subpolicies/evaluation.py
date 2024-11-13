@@ -91,9 +91,9 @@ def run_evaluation(submission, log_path, max_eps=100, write_to_file=True, seed=N
         r = []
         a = []
         o = []
-        count = 0
         
-        
+        # multiply EPISODE_LENGTH by 2, because at each step, the agent calls master and one of the subpolicy 
+        # however, only the subpolicy executed an ennvironment action and changes the reward    
         for j in range(2 * EPISODE_LENGTH):
             actions = {
                 agent_name: submission.AGENTS[agent_name].get_action(
