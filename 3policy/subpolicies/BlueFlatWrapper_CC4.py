@@ -42,13 +42,14 @@ MAX_HOSTS = MAX_USER_HOSTS + MAX_SERVER_HOSTS
 subnets_list_blue = ['public_access_zone_subnet', 'operational_zone_a_subnet', 'operational_zone_b_subnet', 'restricted_zone_a_subnet', 'restricted_zone_b_subnet', 'admin_network_subnet', 'office_network_subnet']
 NUM_RED_AGENTS = 6
 
-USE_BLOCK = False
+USE_BLOCK = False 
 USE_FILES = True
 USE_DECOYS= True
 USE_MESSAGES = True
 
-HITL = True
+HITL = True # expert knowledge enabled
 FULL_MASK = True
+COMPUTE_METRICS = False # just for evaluation, not training
 
 class BlueFlatWrapper(BlueFixedActionWrapper):
     """Converts observation spaces to vectors of fixed size and ordering across episodes.
@@ -128,6 +129,23 @@ class BlueFlatWrapper(BlueFixedActionWrapper):
         self.obs_recover = {} # will constitute the reduced observation space 
         self.obs_investigate = {} # will constitute the reduced observation space
 
+        # infection metrics
+        if COMPUTE_METRICS:
+            self.host_to_subnet_mapping = {}
+            self.infection_stride_lengths = {} # per subnet
+            self.infection_stride_crt ={} # per host
+            self.privileged_stride_lengths = {} # per subnet
+            self.privileged_stride_crt ={} # per host
+            self.infection_status_prev = {} # true/false status per host before step()
+            self.true_false_pos = {}
+            for subnet in subnets_list_blue:
+                self.true_false_pos[subnet] = {}
+                self.true_false_pos[subnet]["tp"] = 0 # correct recover 
+                self.true_false_pos[subnet]["fp"] = 0 # incorrect recover
+                self.infection_stride_lengths[subnet] = []
+                self.privileged_stride_lengths[subnet] = []
+
+
     def reset(self, *args, **kwargs) -> tuple[dict[str, Any], dict[str, Any]]:
         """Reset the environment and update the observation space.
 
@@ -178,6 +196,34 @@ class BlueFlatWrapper(BlueFixedActionWrapper):
                 for subnet in self.subnets(a):
                     self.decoy_access_from[a][subnet] = [False] * MAX_HOSTS
 
+
+        # metrics reset
+        if COMPUTE_METRICS:
+            self.infection_stride_crt = {} # per host
+            self.privileged_stride_crt = {} # per host
+
+            # mapping of hostnames to  subnet names
+            state = self.env.environment_controller.state
+            self.host_to_subnet_mapping = {}
+            for h in state.hosts:
+                if "router" in h: continue
+                self.infection_stride_crt[h] = 0
+                self.privileged_stride_crt[h] = 0
+                for subnet in self.subnet_names:
+                    if subnet not in h: continue
+                    self.host_to_subnet_mapping[h] = subnet
+                    break
+
+            for subnet in subnets_list_blue:
+                self.true_false_pos[subnet]["tp"] = 0 # correct recover 
+                self.true_false_pos[subnet]["fp"] = 0 # incorrect recover
+                self.infection_stride_lengths[subnet] = []
+                self.privileged_stride_lengths[subnet] = []
+
+            self.infection_status_prev = self.infection_status()
+
+
+        # re-initialize policies
         self.output = {}
         self.investigate_mask = {}
         self.recover_mask = {}
@@ -288,6 +334,14 @@ class BlueFlatWrapper(BlueFixedActionWrapper):
             # cannot use self.agents, becomes empty sometimes
             for agent in list(temp_actions.keys()):  
                 messages[agent] = self._encode_messages(agent)
+
+        if COMPUTE_METRICS == True:
+            # updating time to recover, i.e., the infection stride length
+            infection_status_crt = self.infection_status()
+            self.update_time_to_recover_metric(infection_status_crt)
+
+            # save infection status per host before running the actions in step
+            self.infection_status_prev = infection_status_crt
 
         #print("subpoolicy stepping in env", temp_actions)
         observations, rewards, terminated, truncated, info = super().step(
@@ -575,7 +629,11 @@ class BlueFlatWrapper(BlueFixedActionWrapper):
 
             # Process malware events for users, then servers
             subnet_hosts = [h for h in hosts if subnet in h and "router" not in h]
-           
+            
+            if COMPUTE_METRICS:
+                # collect true positives, false positives during an episode
+                self.collect_true_false_pos(observation, subnet, subnet_hosts)
+
             # erase history for remove/restore actions, if necessary
             self.erase_history_if_recovered(agent_name, observation, subnet, subnet_hosts)
 
@@ -936,20 +994,9 @@ class BlueFlatWrapper(BlueFixedActionWrapper):
                 break
 
 
-    def _get_infected(self, state: State, hostname: str):
-        for i in range(NUM_RED_AGENTS):
-            agent_name = f"red_agent_{i}"
-            sessions = state.hosts[hostname].sessions[agent_name]
-            if len(sessions) > 0:  # if red has any sessions on this host
-                return sessions
-
-        return []
-
-
     # checking number files on a host using the env controller state
     def _get_files_from_state(self, state: State, hostname: str):
         return state.hosts[hostname].files
-
 
     def get_files_from_analyse(self, observation):
         if 'success' not in observation or observation['success'].name != 'TRUE': 
@@ -1038,3 +1085,108 @@ class BlueFlatWrapper(BlueFixedActionWrapper):
     def observation_spaces(self) -> dict[str, Space]:
         """Returns multi-discrete spaces corresponding to each agent."""
         return {a: self.observation_space(a) for a in self.possible_agents}
+
+
+    #--- functions used to compute metrics
+    def collect_true_false_pos(self, observation, subnet, subnet_hosts):
+        if 'action' not in observation: return
+        if 'Remove' not in observation['action'].name and 'Restore' not in observation['action'].name: return
+        if subnet not in str(observation['action']): return
+
+        for i in range(len(subnet_hosts)):
+            h = subnet_hosts[i]
+            if h not in str(observation['action']): continue
+
+            [has_session, has_privileged_session] = self.infection_status_prev[h]
+
+            # false positives
+            if not has_session:
+                self.true_false_pos[subnet]["fp"] += 1
+            elif 'Remove' in observation['action'].name and has_privileged_session:
+                self.true_false_pos[subnet]["fp"] += 1
+            else:  # true positives
+                self.true_false_pos[subnet]["tp"] += 1
+            break
+
+    def _get_infected(self, state: State, hostname: str):
+        has_session = False
+        has_privileged_session = False
+
+        for i in range(NUM_RED_AGENTS):
+            agent_name = f"red_agent_{i}"
+            agent_sessions = state.sessions[agent_name]
+            #print(state.hosts[hostname].sessions)
+            session_ids = state.hosts[hostname].sessions[agent_name]
+            for sid in session_ids:
+                s = agent_sessions[sid]
+                if s.active:
+                    has_session = True
+                    if s.has_privileged_access():
+                        has_privileged_session = True
+                        break
+
+        return has_session, has_privileged_session
+
+    def infection_metric(self):
+        infection_metric = {}
+        noninfection_metric = {}
+        privileged = {}
+        nonprivileged = {}
+
+        state = self.env.environment_controller.state
+
+        for subnet in subnets_list_blue + ["contractor_network_subnet"]:
+            infection_metric[subnet] = 0
+            noninfection_metric[subnet] = 0
+            privileged[subnet] = 0
+            nonprivileged[subnet] = 0
+
+            for h in state.hosts:
+                if "router" in h: continue
+                if subnet not in h: continue
+                has_session, has_privileged_session= self._get_infected(state, h)
+                if has_session:
+                    infection_metric[subnet] += 1
+                else:
+                    noninfection_metric[subnet] += 1
+                if has_privileged_session:
+                    privileged[subnet] +=  1
+                else:
+                    nonprivileged[subnet] += 1
+
+        return infection_metric, noninfection_metric, privileged, nonprivileged
+
+    def infection_status(self):
+        infection_status_per_host = {}
+        state = self.env.environment_controller.state
+        for h in state.hosts:
+            if "router" in h: continue
+            has_session, has_privileged_session= self._get_infected(state, h)
+            infection_status_per_host[h] = [has_session, has_privileged_session]
+        return infection_status_per_host
+
+    def update_time_to_recover_metric(self, infection_status_crt):
+        for h in infection_status_crt:
+            inf_crt, privileged_crt = infection_status_crt[h]
+            inf_prev, privileged_prev = self.infection_status_prev[h]
+            if inf_crt == True:
+                self.infection_stride_crt[h] += 1
+            elif inf_crt == False and inf_prev == True:
+                # host has been cleared
+                subnet = self.host_to_subnet_mapping[h]
+                self.infection_stride_lengths[subnet].append(self.infection_stride_crt[h])
+                self.infection_stride_crt[h] = 0
+            if privileged_crt == True:
+                self.privileged_stride_crt[h] += 1
+            elif privileged_crt == False and privileged_prev == True:
+                # red privileged session has been cleared
+                subnet = self.host_to_subnet_mapping[h]
+                self.privileged_stride_lengths[subnet].append(self.privileged_stride_crt[h])
+                self.privileged_stride_crt[h] = 0
+
+    def subnet_assignment(self, agent_name):
+        assignment =  self.env.environment_controller.agent_interfaces[agent_name].allowed_subnets
+        return assignment
+
+    #--- end of functions used to compute metrics
+
