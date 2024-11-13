@@ -1,7 +1,7 @@
 # AAMAS-HMARL-submission
 
 
-This repository contains implementations for Hierarchical Multi-agent Reinforcement Learning for Cyber Network Defense paper submitted to AAMAS 2025. We will document pre-requisites and requirements for execution, how to run the code and describe the approach.
+This repository contains the source code and models for the Hierarchical Multi-agent Reinforcement Learning for Cyber Network Defense paper submitted to AAMAS 2025.
 
 
 ## Requirements
