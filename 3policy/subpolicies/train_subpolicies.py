@@ -37,12 +37,23 @@ class CCPPOTorchPolicy(PPOTorchPolicy):
         self.config = config
         # just in case we are interested, the policy if is in self.config["__policy_id"]
 
+
     def handle_extra_ticks(self, postprocessed_batch):
-        # shifting master rewards by -1 
-        if 'id' in postprocessed_batch["obs"]:
-            rewards = postprocessed_batch['rewards'][1:]
-            rewards = np.concatenate((rewards,[0]))
-            postprocessed_batch['rewards'] = rewards
+        rewards = None
+
+        # shifting master rewards by -1
+        if "id" not in postprocessed_batch["obs"]:
+            return postprocessed_batch
+
+        if "rewards" not in postprocessed_batch:
+            return postprocessed_batch
+
+        if len(postprocessed_batch["rewards"]) <= 1:
+            return postprocessed_batch
+
+        rewards = postprocessed_batch["rewards"][1:]
+        rewards = np.concatenate((rewards,[0]))
+        postprocessed_batch["rewards"] = rewards
 
         return postprocessed_batch
 
@@ -138,7 +149,7 @@ algo_config = (
     )
 )
 
-model_dir = "saved_policies/sub"
+model_dir = "saved_policies/sub_v1"
 
 check_env(env)
 algo = algo_config.build()
