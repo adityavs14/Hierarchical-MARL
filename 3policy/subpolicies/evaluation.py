@@ -212,6 +212,7 @@ def run_evaluation(submission, log_path, max_eps=100, write_to_file=True, seed=N
 
 if __name__ == "__main__":
     import argparse
+    from train_subpolicies import algo_builder
 
     parser = argparse.ArgumentParser("CybORG Evaluation Script")
     parser.add_argument("submission_path", type=str)
@@ -236,6 +237,13 @@ if __name__ == "__main__":
         args.output_path += time.strftime("%Y%m%d_%H%M%S") + "/"
 
     rmkdir(args.output_path)
+    
+    algo = algo_builder()
+    
+    checkpoint_path = "./saved_policies/sub/iter_49"
+    algo.restore(checkpoint_path)
+    algo.save(checkpoint_path)
+    
 
     submission = load_submission(args.submission_path)
     run_evaluation(
