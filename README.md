@@ -23,20 +23,19 @@ pip install ray==2.10.0
 
 ## Directories
 
-### MARL:
+### MARL PPO with single-policy independent learners:
 
-Each Blue agent on the Blue Team is trained as an independent learner using a single policy PPO. However, the agents are guided by the total team reward and can exchange messages, leading to a multi-agent RL setting. 
-The code and saved models are in the 1policy directory. 
+* Each Blue agent on the Blue Team is trained as an independent learner using a single-policy PPO algorithm. 
+* However, the agents are guided by the total team reward and can exchange messages, leading to a multi-agent RL setting. 
+* The code and saved models are in the `1policy` directory. 
 
 ### Hierarchical MARL:
 
-Each Blue agent on the Blue Team is trained as an independent learner, but using a hierarchy of PPO policies. 
-We have 2 hierarchical versions based on the number of subpolicies defined:
-
-* `3policy` corresponds to the version with one master policy and 2 subpolicies, namely `Investigate` and `Recover`. 
-* `4policy` includes an additional subpolicy `Control Traffic`. 
-
-Both versions are currently configured to work on the default settings provided by `CybORG`. The models trained and evaluated in the paper are provided in the `saved_policies` directory.
+* Each Blue agent on the Blue Team is trained as an independent learner, but using a hierarchy of PPO policies. 
+* We implemented 2 hierarchical versions based on the number of subpolicies defined:
+  * `3policy` corresponds to the version with one master policy and 2 subpolicies, namely `Investigate` and `Recover`. 
+  * `4policy` includes an additional subpolicy `Control Traffic`. 
+* The models trained and evaluated in the paper are provided in the `saved_policies` directory.
 
 ## H-MARL Expert
 
