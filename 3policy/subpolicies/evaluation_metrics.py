@@ -110,8 +110,10 @@ def run_evaluation(submission, log_path, max_eps=100, write_to_file=True, seed=N
         noninfection_frac[i] = {}
         nonprivileged_frac[i] = {}
         red_actions[i] = {}
-
-        for j in range(EPISODE_LENGTH):
+ 
+        # multiply EPISODE_LENGTH by 2, because at each step, the agent calls master and one of the subpolicy
+        # however, only the subpolicy executed an ennvironment action and changes the reward
+        for j in range(2 * EPISODE_LENGTH):
             actions = {
                 agent_name: submission.AGENTS[agent_name].get_action(
                     observations[agent_name], wrapped_cyborg.action_space(agent_name[:12])
@@ -119,10 +121,19 @@ def run_evaluation(submission, log_path, max_eps=100, write_to_file=True, seed=N
                 for agent_name in observations
             }
             observations, rew, term, trunc, info = wrapped_cyborg.step(actions)
-            #print(rew)
+            
+            ###
+            # r.append(mean(rew.values()))
+            ###
 
-            r.append(mean(rew.values()))
-             
+            tmp_r = []
+            for x in rew:
+                if "master" not in x:
+                    tmp_r.append(rew[x])
+            if len(tmp_r) > 0:
+                r.append(mean(tmp_r))
+            ###
+
             # compromise metric
             imetric, nonimetric, privileged, nonprivileged = wrapped_cyborg.infection_metric()
             for subnet in imetric:
