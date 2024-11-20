@@ -21,13 +21,14 @@ Install Ray 2.10:
 pip install ray==2.10.0
 ```
 
-## MARL:
+## MARL
 
 * Each Blue agent on the Blue Team is trained as an independent learner using a single-policy PPO algorithm. 
 * However, the agents are guided by the total team reward and can exchange messages, leading to a multi-agent RL setting. 
 * The code and saved models are in the `1policy` directory.
+* For training and evaluation, use the same commands discussed below for Hierarchical MARL.
 
-## Hierarchical MARL:
+## Hierarchical MARL
 
 * Each Blue agent on the Blue Team is trained as an independent learner, but using a hierarchy of PPO policies. 
 * We implemented 2 hierarchical versions based on the number of subpolicies defined:
