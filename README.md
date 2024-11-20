@@ -21,15 +21,13 @@ Install Ray 2.10:
 pip install ray==2.10.0
 ```
 
-## Directories
-
-### MARL PPO with single-policy independent learners:
+## MARL:
 
 * Each Blue agent on the Blue Team is trained as an independent learner using a single-policy PPO algorithm. 
 * However, the agents are guided by the total team reward and can exchange messages, leading to a multi-agent RL setting. 
-* The code and saved models are in the `1policy` directory. 
+* The code and saved models are in the `1policy` directory.
 
-### Hierarchical MARL:
+## Hierarchical MARL:
 
 * Each Blue agent on the Blue Team is trained as an independent learner, but using a hierarchy of PPO policies. 
 * We implemented 2 hierarchical versions based on the number of subpolicies defined:
@@ -37,11 +35,11 @@ pip install ray==2.10.0
   * `4policy` includes an additional subpolicy `Control Traffic`. 
 * The models trained and evaluated in the paper are provided in the `saved_policies` directory.
 
-## H-MARL Expert
+### H-MARL Expert
 
 This defense strategy corresponds to a master policy guided by expert domain knowledge. For training this version we will only need the `subpolicies` folder. 
 
-### Training
+#### Training
 
 Navigate to the directory of either `3policy` or `4policy` depending on the number of subpolicies and run the following commands.
 ```
@@ -50,7 +48,7 @@ python3 -u subpolicies/train_subpolicies.py
 ```
 The models will be saved at `saved_subpolicies/sub`.
 
-### Evaluation and Metrics
+#### Evaluation and Metrics
 To evaluate H-MARL Expert, run the following command from the 3policy (or 4policy) directory.
 
 ```
@@ -64,14 +62,14 @@ To collect additional metrics related to network security posture, precision and
 python3 -u subpolicies/evaluation_metrics.py subpolicies/submission.py hmarl_expert_output
 ```
 
-## H-MARL Meta
+### H-MARL Meta
 This corresponds to the 2 step training of subpolicies and master policy. To train this version we reuse the subpolicies trained by `H-MARL Expert` to train the master policies. 
-### Training
+#### Training
 Ensure that the subpolicies have been trained using the `H-MARL Expert` method defined [here](#h-marl-expert), and run:
 ```
 python3 -u master/train_master.py
 ```
-### Evaluation and Metrics
+#### Evaluation and Metrics
 To evaluate `H-MARL Meta`, run the following command:
 ```
 python3 -u master/evaluation.py master/submission.py hmarl_meta_output
