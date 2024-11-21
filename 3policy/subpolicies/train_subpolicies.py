@@ -140,7 +140,15 @@ def algo_builder(num_workers = 0):
         .multi_agent(
             policies={
                 ray_agent: PolicySpec(
-                    policy_class = CCPPOTorchPolicy,
+                    # The CCPPOTorchPolicy class correctly matches the reward for the master.
+                    # This is not necessary because we only need the subpolicies for H-MARL Expert, 
+                    # while the master follows an encoded rule.
+                    # Furthermore, we encountered errors when loading the models trained with CCPPOTorchPolicy 
+                    # on another rllib instalation and the fix was 
+                    # to restore and save the models during evaluation (see evaluation script)
+
+                    # policy_class = CCPPOTorchPolicy,
+                    policy_class = PPOTorchPolicy,
                     observation_space = OBSERVATION_SPACE[ray_agent],
                     action_space = ACTION_SPACE[ray_agent],
                     config = {"entropy_coeff": 0.001},
