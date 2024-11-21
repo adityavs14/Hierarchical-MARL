@@ -238,11 +238,15 @@ if __name__ == "__main__":
 
     rmkdir(args.output_path)
     
-    algo = algo_builder()
     
-    checkpoint_path = "./saved_policies/sub/iter_49"
-    algo.restore(checkpoint_path)
-    algo.save(checkpoint_path)
+    # if the policies fail to load sometimes loading and saving locally helps. 
+    # This can happen due to different ray versions as well. 
+    # Uncomment the block below to reconfigure the saved policies
+    
+    # algo = algo_builder()
+    # checkpoint_path = "./saved_policies/sub/iter_49"
+    # algo.restore(checkpoint_path)
+    # algo.save(checkpoint_path)
     
 
     submission = load_submission(args.submission_path)
