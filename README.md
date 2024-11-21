@@ -42,12 +42,12 @@ This defense strategy corresponds to a master policy guided by expert domain kno
 
 #### Training
 
-Navigate to the directory of either `3policy` or `4policy` depending on the number of subpolicies and run the following commands.
+Navigate to the directory of either `3policy` or `4policy` depending on the number of subpolicies and run the following commands. We can specify the number of threads to use for parallelization of rollout as an argument. 
 ```
 cd 3policy
-python3 -u subpolicies/train_subpolicies.py
+python3 -u subpolicies/train_subpolicies.py 30
 ```
-The models will be saved at `saved_subpolicies/sub`.
+The above command specifies 30 threads to be used. The models will be saved at `saved_subpolicies/sub`.
 
 #### Evaluation and Metrics
 To evaluate H-MARL Expert, run the following command from the 3policy (or 4policy) directory.
@@ -66,9 +66,9 @@ python3 -u subpolicies/evaluation_metrics.py subpolicies/submission.py hmarl_exp
 ### H-MARL Meta
 This corresponds to the 2 step training of subpolicies and master policy. To train this version we reuse the subpolicies trained by `H-MARL Expert` to train the master policies. 
 #### Training
-Ensure that the subpolicies have been trained using the `H-MARL Expert` method defined [here](#h-marl-expert), and run:
+Ensure that the subpolicies have been trained using the `H-MARL Expert` method defined [here](#h-marl-expert), and run while being in the same directory (e.g. `3policy`). We can again pass the number of threads to be used as an argument:
 ```
-python3 -u master/train_master.py
+python3 -u master/train_master.py 30
 ```
 #### Evaluation and Metrics
 To evaluate `H-MARL Meta`, run the following command:
