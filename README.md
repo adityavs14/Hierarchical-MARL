@@ -38,7 +38,9 @@ pip install ray==2.10.0
 
 ### H-MARL Expert
 
-This defense strategy corresponds to a master policy guided by expert domain knowledge. For training this version we will only need the `subpolicies` folder. 
+This defense strategy corresponds to a master policy guided by expert domain knowledge. The expert knowledge consists in telling the master what subpolicy to call, based on the following rule: "If indicators of compromise are present in the local observation, choose the Recover subpolicy; otherwise, choose the Investigate subpolicy."
+
+For training H-MARL Expert we will only need the `subpolicies` folder. 
 
 #### Training
 
@@ -55,7 +57,7 @@ To evaluate H-MARL Expert, run the following command from the h-marl-3policy (or
 ```
 python3 -u subpolicies/evaluation.py subpolicies/submission.py hmarl_expert_output
 ```
-This command will use the `submission.py` already defined in the `subpolicies` directory and save the results to a directory `h-marl-3policy/hmarl_expert_output`.
+This command will use the `submission.py` already defined in the `subpolicies` directory and save the results to a directory `hmarl_expert_output`.
 
 To collect additional metrics related to network security posture, precision and error of recovery actions, and operational impact, enable the `COMPUTE_METRICS` flag from the `subpolicies/BlueFlatWrapper_CC4.py` script, and run the following command:
 
@@ -75,7 +77,7 @@ To evaluate `H-MARL Meta`, run the following command:
 ```
 python3 -u master/evaluation.py master/submission.py hmarl_meta_output
 ```
-This command will use the `submission.py` already defined in the `master` directory and save the results to a directory `h-marl-3policy/hmarl_meta_output`.
+This command will use the `submission.py` already defined in the `master` directory and save the results to a directory `hmarl_meta_output`.
 
 To collect additional metrics related to network security posture, precision and error of recovery actions, and operational impact, enable the `COMPUTE_METRICS` flag from the `master/BlueFlatWrapper_CC4.py` script, and run the following command:
 
