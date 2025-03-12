@@ -1,7 +1,7 @@
 # Hierarchical MARL
 
 
-This repository contains the source code and models for the paper "Hierarchical Multi-agent Reinforcement Learning for Cyber Network Defense" submitted to AAMAS 2025.
+This repository contains the source code and models for the paper [Hierarchical Multi-agent Reinforcement Learning for Cyber Network Defense](https://arxiv.org/abs/2410.17351).
 
 
 ## Requirements
